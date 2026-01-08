@@ -1,0 +1,10 @@
+Nice — you’re verified ✅
+
+**Verified contract page (Sepolia Etherscan):**
+[https://sepolia.etherscan.io/address/0x063643dc5708fDcd8C52e99F1f696f73B7125cfb](https://sepolia.etherscan.io/address/0x063643dc5708fDcd8C52e99F1f696f73B7125cfb)
+
+**Deployment address:**
+0x063643dc5708fDcd8C52e99F1f696f73B7125cfb
+
+**Deployment tx:**
+[https://sepolia.etherscan.io/tx/0x052fc5d8a14fda0f85937b86e17ed1816ab5254685337577f92ba1f26c8a2608](https://sepolia.etherscan.io/tx/0x052fc5d8a14fda0f85937b86e17ed1816ab5254685337577f92ba1f26c8a2608)

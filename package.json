@@ -1,10 +1,9 @@
 {
   "dependencies": {
-    "@types/fs-extra": "^11.0.4",
-    "dotenv": "^16.4.5",
-    "ethers": "6",
+    "@account-abstraction/sdk": "^0.6.0",
+    "dotenv": "^16.6.1",
+    "ethers": "^5.8.0",
     "fs-extra": "^11.2.0",
-    "typescript": "^5.4.5",
     "zksync-ethers": "^6.8.0"
   },
   "scripts": {
@@ -12,5 +11,30 @@
     "deploy": "ts-node javascript-scripts/DeployZkMinimal.ts",
     "sendTx": "ts-node javascript-scripts/SendAATx.ts",
     "compile": "forge build --zksync"
-  }
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^25.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "name": "minimal-account-abstraction",
+  "description": "> [!IMPORTANT]   > This repo is for demo purposes only.",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PatrickAlphaC/minimal-account-abstraction.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PatrickAlphaC/minimal-account-abstraction/issues"
+  },
+  "homepage": "https://github.com/PatrickAlphaC/minimal-account-abstraction#readme"
 }

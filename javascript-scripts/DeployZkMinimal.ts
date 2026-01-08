@@ -1,67 +1,102 @@
-import * as fs from "fs-extra"
-import { utils, Wallet, Provider, EIP712Signer, types, Contract, ContractFactory } from "zksync-ethers"
-import * as ethers from "ethers"
-import "dotenv/config"
+import path from "path";
+import * as fs from "fs-extra";
+import { Wallet, Provider, ContractFactory } from "zksync-ethers";
+import "dotenv/config";
 
-async function main() {
-    // Local net - comment to unuse
-    let provider = new Provider("http://127.0.0.1:8011")
-    let wallet = new Wallet(process.env.PRIVATE_KEY!)
-
-    // // Sepolia - uncomment to use
-    // let provider = new Provider(process.env.ZKSYNC_SEPOLIA_RPC_URL!)
-    // const encryptedJson = fs.readFileSync(".encryptedKey.json", "utf8")
-    // let wallet = Wallet.fromEncryptedJsonSync(
-    //     encryptedJson,
-    //     process.env.PRIVATE_KEY_PASSWORD!
-    // )
-
-    // // Mainnet - uncomment to use
-    // let provider = new Provider(process.env.ZKSYNC_RPC_URL!)
-    // const encryptedJson = fs.readFileSync(".encryptedKey.json", "utf8")
-    // let wallet = Wallet.fromEncryptedJsonSync(
-    //     encryptedJson,
-    //     process.env.PRIVATE_KEY_PASSWORD!
-    // )
-
-    wallet = wallet.connect(provider)
-    console.log(`Working with wallet: ${await wallet.getAddress()}`)
-    const abi = JSON.parse(fs.readFileSync("./out/ZkMinimalAccount.sol/ZkMinimalAccount.json", "utf8"))["abi"]
-    const bytecode = JSON.parse(fs.readFileSync("./zkout/ZkMinimalAccount.sol/ZkMinimalAccount.json", "utf8"))["bytecode"]["object"]
-
-    const factoryDeps = [bytecode] // We can skip this, but this is what's happening 
-    const zkMinimalAccountFactory = new ContractFactory<any[], Contract>(
-        abi,
-        bytecode,
-        wallet,
-        "createAccount",
-    )
-
-    // const deployOptions = {
-    //     customData: {
-    //         salt: ethers.ZeroHash,
-    //         // What if we don't do factoryDeps? 
-    //         // factoryDeps,
-    //         // factoryDeps: factoryDeps
-    //         // Ah! The ContractFactory automatically adds it in!
-    //     },
-    // }
-
-    const zkMinimalAccount = await zkMinimalAccountFactory.deploy()
-
-    // The above should send the following calldata:
-    // 0xecf95b8a0000000000000000000000000000000000000000000000000000000000000000010006ddf1eae1b53a0a62fab1fc8b4fd95c8a6f4d5fe540bf109f17bae0a431000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000
-    // 
-    // If you pop it into `calldata-decode` you'd see that the inputs to the `createAccount` are correct
-    // cast calldata-decode "createAccount(bytes32,bytes32,bytes,uint8)" 
-
-    console.log(`zkMinimalAccount deployed to: ${await zkMinimalAccount.getAddress()}`)
-    console.log(`With transaction hash: ${(await zkMinimalAccount.deploymentTransaction())!.hash}`)
+function mustEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) throw new Error(`${name} is missing in .env`);
+  return v;
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error(error)
-        process.exit(1)
-    })
+function readJson(rel: string) {
+  const p = path.resolve(__dirname, "..", rel);
+  if (!fs.existsSync(p)) throw new Error(`Artifact not found: ${p}`);
+  return JSON.parse(fs.readFileSync(p, "utf8"));
+}
+
+function getByPath(obj: any, p: string): any {
+  return p.split(".").reduce((acc, k) => acc?.[k], obj);
+}
+
+function normalizeHexBytecode(bc: string): string {
+  // some artifacts store bytecode without 0x
+  if (!bc.startsWith("0x")) bc = "0x" + bc;
+  return bc;
+}
+
+/**
+ * Try the common places zkSync / solc / foundry artifacts store bytecode.
+ * We intentionally do NOT treat bytecodeHash/factoryDeps as deploy bytecode.
+ */
+function extractBytecode(artifact: any): string {
+  const candidates = [
+    "bytecode",
+    "bytecode.object",
+    "evm.bytecode.object",
+    "evm.bytecode",
+    "data.bytecode",
+    "zk.bytecode",
+  ];
+
+  for (const p of candidates) {
+    const v = getByPath(artifact, p);
+    if (typeof v === "string" && v.length > 0) {
+      const hex = normalizeHexBytecode(v);
+      // sanity check
+      if (hex === "0x") continue;
+      return hex;
+    }
+  }
+
+  // If we get here, print a helpful hint
+  const topKeys = Object.keys(artifact ?? {});
+  throw new Error(
+    `Bytecode not found in artifact JSON.
+Tried: ${candidates.join(", ")}
+Top-level keys found: ${topKeys.join(", ")}
+
+Make sure you're reading the zkSync-compiled artifact in zkout/, e.g.
+  zkout/ZkMultiSigAccountAbstraction.sol/ZkMultiSigAccountAbstraction.json`
+  );
+}
+
+async function main() {
+  const rpc = mustEnv("ZKSYNC_SEPOLIA_RPC_URL");
+  const password = mustEnv("PRIVATE_KEY_PASSWORD");
+
+  const provider = new Provider(rpc);
+
+  const enc1Path = path.resolve(__dirname, ".encryptedKey_1.json");
+  const enc2Path = path.resolve(__dirname, ".encryptedKey_2.json");
+
+  const wallet1 = Wallet.fromEncryptedJsonSync(fs.readFileSync(enc1Path, "utf8"), password).connect(provider);
+  const wallet2 = Wallet.fromEncryptedJsonSync(fs.readFileSync(enc2Path, "utf8"), password).connect(provider);
+
+  const owner1 = await wallet1.getAddress();
+  const owner2 = await wallet2.getAddress();
+
+  console.log(`Deploying with owners:\n  owner1: ${owner1}\n  owner2: ${owner2}`);
+  console.log(`Deployer balance (owner1): ${(await provider.getBalance(owner1)).toString()}`);
+
+  // IMPORTANT: zkSync artifact from zkout/
+  const artifact = readJson("zkout/ZkMultiSigAccountAbstraction.sol/ZkMultiSigAccountAbstraction.json");
+
+  const abi = artifact?.abi;
+  if (!abi) throw new Error("ABI not found in artifact JSON");
+
+  const bytecode = extractBytecode(artifact);
+
+  const factory = new ContractFactory(abi, bytecode, wallet1);
+  const deployed = await factory.deploy([owner1, owner2]);
+  await deployed.waitForDeployment();
+
+  const addr = await deployed.getAddress();
+  console.log(`ZkMultiSigAccountAbstraction deployed to: ${addr}`);
+  console.log(`Now set: ZK_ACCOUNT_ADDRESS=${addr} in your .env`);
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

@@ -6,12 +6,16 @@ solc = "0.8.24"
 remappings = [
     '@openzeppelin/contracts=lib/openzeppelin-contracts/contracts',
     '@matterlabs/zksync-contracts/=lib/zksync-contracts/zksync-contracts/',
+    'ethers=./node_modules/ethers',
+    'dotenv=./node_modules/dotenv'
 ]
 fs_permissions = [
     { access = "read", path = "./broadcast" },
     { access = "read", path = "./reports" },
 ]
-via-ir = true
+optimizer = true
+optimizer_runs = 200
+via_ir = true
 is-system = true
 
 [profile.zksync]
@@ -45,14 +49,9 @@ tab_width = 4
 wrap_comments = true
 
 [etherscan]
-# zksync = no keey needed for zksync
-mainnet = { key = "${ETHERSCAN_API_KEY}" }
-arbitrum = { key = "${ARBITRUMSCAN_API_KEY}" }
+# zksync sepolia = not verified via Etherscan; keep only Ethereum Sepolia here
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
 
 [rpc_endpoints]
-zksync = "https://mainnet.era.zksync.io"
-mainnet = "${MAINNET_RPC_URL}"           # uses the MAINNET_RPC_URL environment variable
-arbitrum = "${ARBITRUM_RPC_URL}"         # uses the ARBITRUM_RPC_URL environment variable
-
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+sepolia = "${SEPOLIA_RPC_URL}"
+zksync_sepolia = "${ZKSYNC_SEPOLIA_RPC_URL}"

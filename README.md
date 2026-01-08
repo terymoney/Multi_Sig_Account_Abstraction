@@ -1,258 +1,254 @@
-> [!IMPORTANT]  
-> This repo is for demo purposes only. 
+````md
+# Minimal Account Abstraction (EVM ERC-4337 + zkSync Native AA)
 
-# Account Abstraction
+A portfolio project demonstrating **Account Abstraction** across two ecosystems:
 
-- [Account Abstraction](#account-abstraction)
-  - [What is Account Abstraction?](#what-is-account-abstraction)
-  - [What's this repo show?](#whats-this-repo-show)
-  - [What does this repo not show?](#what-does-this-repo-not-show)
-- [Getting Started](#getting-started)
-  - [Requirements](#requirements)
-  - [Installation](#installation)
-- [Quickstart](#quickstart)
-  - [Vanilla Foundry](#vanilla-foundry)
-    - [Deploy - Arbitrum](#deploy---arbitrum)
-    - [User operation - Arbitrum](#user-operation---arbitrum)
-  - [zkSync Foundry](#zksync-foundry)
-    - [Deploy - zkSync local network](#deploy---zksync-local-network)
-      - [Additional Requirements](#additional-requirements)
-      - [Setup - local node](#setup---local-node)
-      - [Deploy - local node](#deploy---local-node)
-    - [Deploy - zkSync Sepolia or Mainnet](#deploy---zksync-sepolia-or-mainnet)
-- [Example Deployments](#example-deployments)
-  - [zkSync (Sepolia)](#zksync-sepolia)
-  - [Ethereum (Arbitrum)](#ethereum-arbitrum)
-- [Account Abstraction zkSync Contract Deployment Flow](#account-abstraction-zksync-contract-deployment-flow)
-  - [First time](#first-time)
-  - [Subsequent times](#subsequent-times)
-- [FAQ](#faq)
-  - [What if I don't add the contract hash to factory deps?](#what-if-i-dont-add-the-contract-hash-to-factory-deps)
-  - [Why can't we do these deployments with foundry or cast?](#why-cant-we-do-these-deployments-with-foundry-or-cast)
-  - [Why can I use `forge create --legacy` to deploy a regular contract?](#why-can-i-use-forge-create---legacy-to-deploy-a-regular-contract)
-- [Acknowledgements](#acknowledgements)
-- [Disclaimer](#disclaimer)
+1) **EVM AA (ERC-4337-style / alt-mempool flow)**  
+   - Deploy + verify AA contracts on **Ethereum Sepolia**
+   - Work with AA patterns around EntryPoint/UserOperation-style execution (EVM track)
 
-## What is Account Abstraction?
+2) **zkSync Era Native AA**  
+   - Deploy a native AA smart account on **zkSync Era Sepolia**
+   - Deploy a test ERC20, mint, approve spending, and transfer tokens (zkSync track)
 
-EoAs are now smart contracts. That's all account abstraction is.
+This repo is built to show real deployment + interaction workflows, not just theory.
 
-But what does that mean?
+---
 
-Right now, every single transaction in web3 stems from a single private key. 
+## Why Account Abstraction?
 
-> account abstraction means that not only the execution of a transaction can be arbitrarily complex computation logic as specified by the EVM, but also the authorization logic.
+Traditional Web3 transactions originate from EOAs controlled by a single private key.  
+Account Abstraction allows **smart contracts to behave like accounts**, enabling:
 
-- [Vitalik Buterin](https://ethereum-magicians.org/t/implementing-account-abstraction-as-part-of-eth1-x/4020)
-- [EntryPoint Contract v0.6](https://etherscan.io/address/0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789)
-- [EntryPoint Contract v0.7](https://etherscan.io/address/0x0000000071727De22E5E9d8BAf0edAc6f37da032)
-- [zkSync AA Transaction Flow](https://docs.zksync.io/build/developer-reference/account-abstraction.html#the-transaction-flow)
+- multi-owner / multisig authorization flows
+- programmable spending rules and validation logic
+- better UX patterns (batching, sponsorship, recovery concepts)
 
-## What's this repo show?
+This project demonstrates those concepts in code and on-chain deployments.
 
-1. A minimal EVM "Smart Wallet" using alt-mempool AA
-   1. We even send a transactoin to the `EntryPoint.sol`
-2. A minimal zkSync "Smart Wallet" using native AA
-   1. [zkSync uses native AA, which is slightly different than ERC-4337](https://docs.zksync.io/build/developer-reference/account-abstraction.html#iaccount-interface)
-   2. We *do* send our zkSync transaction to the alt-mempool
+---
 
-## What does this repo not show?
+## What this repo demonstrates
 
-1. Sending your userop to the alt-mempool 
-   1. You can learn how to do this via the [alchemy docs](https://alchemy.com/?a=673c802981)
+### ✅ EVM Track (Ethereum Sepolia)
+- AA contract deployment and **verification on Etherscan**
+- EVM AA workflow foundation (ERC-4337-style patterns)
 
-# Getting Started 
+### ✅ zkSync Track (zkSync Era Sepolia)
+- Native AA smart account deployment (ZkMultiSigAccountAbstraction)
+- Test ERC20 deployment + minting
+- ERC20 approve + transfer (including funding the AA smart account with tokens)
+
+---
+
+## Live Deployments (Portfolio Proof)
+
+### Ethereum Sepolia (Verified)
+- **Contract:** https://sepolia.etherscan.io/address/0x063643dc5708fDcd8C52e99F1f696f73B7125cfb  
+- **Deployment tx:** https://sepolia.etherscan.io/tx/0x052fc5d8a14fda0f85937b86e17ed1816ab5254685337577f92ba1f26c8a2608  
+
+### zkSync Era Sepolia
+- **AA Smart Account:**  
+  https://explorer.sepolia.era.zksync.dev/address/0x8B24BCc2568C840fd79AB3e4a8F497e00e7A6b1B
+
+- **TestERC20:**  
+  https://explorer.sepolia.era.zksync.dev/address/0xea20A883eB092D7f6B6a9579600FE1443018b82E
+
+- **Example zkSync txs (demo proof):**
+  - Mint:    https://explorer.sepolia.era.zksync.dev/tx/0xfa2b7ff18034662f8360e7b3069d330916d2e888b353cd7f13ecbbf0e72db7d9
+  - Approve: https://explorer.sepolia.era.zksync.dev/tx/0xc3c1978400438a00c30097a1651c12235d638ce1913640a9c7b3b2d56f82e85c
+  - Transfer:https://explorer.sepolia.era.zksync.dev/tx/0x4e0cbc7f68c6a62405dc2382aa7f6f9764b3af0dbec26ca9c9aeb6d66878e869
+
+---
+
+## Repository Layout
+
+### Solidity / Foundry (EVM track)
+Typical folders in this repo:
+- `src/MultiSigAccountAbstraction.sol` — Solidity contracts (EVM AA contracts)
+- `script/DeployMultiSigAccountAbstraction.s.sol` — Foundry deployment scripts (EVM deployments)
+- `test/MultiSigAccountAbstractionTest.t.sol` — Foundry tests
+
+### TypeScript scripts (zkSync track)
+- `javascript-scripts/DeployZkMinimal.ts` — deploy zkSync AA account
+- `javascript-scripts/DeployERC20.ts` — deploy Test ERC20 on zkSync
+- `javascript-scripts/ApproveAndTransfer.ts` — approve + optional transfer (EOA signer)
+
+Env file used by TS scripts:
+- `/$ROOTFOLDER/.env`
+
+Env file used by TS scripts:
+- `javascript-scripts/.env`
+
+> Note: Foundry scripts handle the EVM track, while `javascript-scripts/` handle zkSync deployments/interactions.
+
+---
+
+# Getting Started
 
 ## Requirements
+- Node.js 18+
+- npm
+- Foundry (`cast`, `forge`)
 
-- [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-  - You'll know you did it right if you can run `git --version` and you see a response like `git version x.x.x`
-- [foundry](https://getfoundry.sh/)
-  - You'll know you did it right if you can run `forge --version` and you see a response like `forge 0.2.0 (816e00b 2023-03-16T00:05:26.396218Z)`
-- [foundry-zksync](https://github.com/matter-labs/foundry-zksync)
-  - You'll know you did it right if you can run `forge-zksync --help` and you see `zksync` somewhere in the output
+## Install
+```bash
+npm install
+````
 
-## Installation
+## Load environment
 
 ```bash
-git clone https://github.com/PatrickAlphaC/minimal-account-abstraction
-cd minimal-account-abstraction
-make
+set -a
+source javascript-scripts/.env
+set +a
 ```
 
-# Quickstart 
+---
 
-## Vanilla Foundry
+# Quickstart
+
+## A) EVM Track (Ethereum Sepolia)
+
+> Use this track for your EVM AA contracts (ERC-4337 style).
+
+### Build + test
 
 ```bash
-foundryup
-make test
+forge build
+forge test
 ```
 
-### Deploy - Arbitrum
+### Deploy (example)
 
 ```bash
-make deployEth
+# Replace with your repo's actual deploy script name if different
+forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --private-key $PRIVATE_KEY_1
 ```
 
-### User operation - Arbitrum
+### Verify
 
 ```bash
-make sendUserOp
+# If you used forge verify-contract before, keep that workflow here.
+# Replace CONTRACT_NAME + constructor args as needed.
+forge verify-contract \
+  --chain-id 11155111 \
+  --compiler-version v0.8.24 \
+  <SEPOLIA_DEPLOYMENT_ADDRESS> \
+  src/<CONTRACT_FILE>.sol:<CONTRACT_NAME> \
+  --etherscan-api-key $ETHERSCAN_API_KEY
 ```
 
-## zkSync Foundry
+---
+
+## B) zkSync Track (zkSync Era Sepolia)
+
+### 1) Deploy zkSync AA smart account
 
 ```bash
-foundryup-zksync
-make zkbuild
-make zktest
+npx tsx javascript-scripts/DeployZkMinimal.ts
 ```
 
-### Deploy - zkSync local network
-
-#### Additional Requirements
-- [npx & npm](https://docs.npmjs.com/cli/v10/commands/npm-install)
-  - You'll know you did it right if you can run `npm --version` and you see a response like `7.24.0` and `npx --version` and you see a response like `8.1.0`.
-- [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
-  - You'll know you did it right if you can run `yarn --version` and you see a response like `1.22.17`.
-- [docker](https://docs.docker.com/engine/install/)
-  - You'll know you did it right if you can run `docker --version` and you see a response like `Docker version 20.10.7, build f0df350`.
-  - Then, you'll want the daemon running, you'll know it's running if you can run `docker --info` and in the output you'll see something like the following to know it's running:
-```bash
-Client:
- Context:    default
- Debug Mode: false
-```
-
-Install dependencies:
-```bash
-yarn
-```
-
-#### Setup - local node
+Set address in env:
 
 ```bash
-# Select `in memory node` and nothing else
-npx zksync-cli dev start
+sed -i 's/^ZK_ACCOUNT_ADDRESS=.*/ZK_ACCOUNT_ADDRESS=0x8B24BCc2568C840fd79AB3e4a8F497e00e7A6b1B/' javascript-scripts/.env
+set -a && source javascript-scripts/.env && set +a
 ```
 
-#### Deploy - local node
-
-> [!IMPORTANT]  
-> *Never* have a private key associated with real funds in plaintext. 
+Sanity checks:
 
 ```bash
-# Setup your .env file, see the .env.example for an example
-make zkdeploy
+cast codesize $ZK_ACCOUNT_ADDRESS --rpc-url $ZKSYNC_SEPOLIA_RPC_URL
+cast balance  $ZK_ACCOUNT_ADDRESS --rpc-url $ZKSYNC_SEPOLIA_RPC_URL
 ```
 
-> Note: Sending an account abstraction transaction doesn't work on the local network, because we don't have the system contracts setup on the local network. 
-
-### Deploy - zkSync Sepolia or Mainnet
-
-Make sure your wallet has at least 0.01 zkSync ETH in it.
-
-1. Encrypt your key 
-
-Add your `PRIVATE_KEY` and `PRIVATE_KEY_PASSWORD` to your `.env` file, then run:
+### 2) Deploy ERC20
 
 ```bash
-make encryptKey
+npx tsx javascript-scripts/DeployERC20.ts
 ```
 
-> [!IMPORTANT]
-> NOW DELETE YOUR PRIVATE KEY AND PASSWORD FROM YOUR `.env` FILE!!!
-> Don't push your `.encryptedKey.json` up to GitHub either!
-
-1. Un-Comment the Sepolia or Mainnet section (depending on which you'd like to use) of `DeployZkMinimal.ts` and `SendAATx.ts`:
-
-```javascript
-// // Sepolia - uncomment to use
-```
-
-3. Deploy the contract
-```bash
-make zkdeploy
-```
-
-You'll get an output like:
-```
-zkMinimalAccount deployed to: 0x4768d649Da9927a8b3842108117eC0ca7Bc6953f
-With transaction hash: 0x103f6d894c20620dc632896799960d06ca37e722d20682ca824d428579ba157c
-```
-
-Grab the address of the `zkMinimalAccount` and add it to the `ZK_MINIMAL_ADDRESS` of `SendAATx.ts`.
-
-4. Fund your account
-
-Send it `0.005` zkSync sepolia ETH.
-
-5. Send an AA transaction
+Set token address:
 
 ```bash
-make sendTx
+sed -i 's/^TOKEN_ADDRESS=.*/TOKEN_ADDRESS=0xea20A883eB092D7f6B6a9579600FE1443018b82E/' javascript-scripts/.env
+set -a && source javascript-scripts/.env && set +a
 ```
 
-You'll get an out put like this:
+### 3) Mint tokens to EOA
 
-```
-Let's do this!
-Setting up contract details...
-The owner of this minimal account is:  0x643315C9Be056cDEA171F4e7b2222a4ddaB9F88D
-Populating transaction...
-Signing transaction...
-The minimal account nonce before the first tx is 0
-Transaction sent from minimal account with hash 0xec7800e3a01d5ba5e472396127b656f7058cdcc5a1bd292b2b49f76aa19548c8
-The account's nonce after the first tx is 1
+```bash
+cast send $TOKEN_ADDRESS \
+  "mint(address,uint256)" \
+  $EOA1 \
+  1000000000000000000000 \
+  --private-key $PRIVATE_KEY_1 \
+  --rpc-url $ZKSYNC_SEPOLIA_RPC_URL
 ```
 
-# Example Deployments
+### 4) Approve spender
 
-## zkSync (Sepolia)
-- [ZkMinimal Account (Sepolia)](https://sepolia.explorer.zksync.io/address/0x5249Fd99f1C1aE9B04C65427257Fc3B8cD976620)
-- [USDC Approval via native zkSync AA (Sepolia)](https://sepolia.explorer.zksync.io/tx/0x43224b566a0b7497a26c57ab0fcea7d033dccd6cd6e16004523be0ce14fbd0fd)
-- [Contract Deployer](https://explorer.zksync.io/address/0x0000000000000000000000000000000000008006)
+```bash
+cast send $TOKEN_ADDRESS \
+  "approve(address,uint256)" \
+  $SPENDER_ADDRESS \
+  $AMOUNT_TO_APPROVE \
+  --private-key $PRIVATE_KEY_1 \
+  --rpc-url $ZKSYNC_SEPOLIA_RPC_URL
+```
 
-## Ethereum (Arbitrum)
-- [Minimal Account](https://arbiscan.io/address/0x03Ad95a54f02A40180D45D76789C448024145aaF#code)
-- [USDC Approval via EntryPoint](https://arbiscan.io/tx/0x03f99078176ace63d36c5d7119f9f1c8a74da61516616c43593162ff34d1154b#eventlog)
+Check allowance:
 
-# Account Abstraction zkSync Contract Deployment Flow
+```bash
+cast call $TOKEN_ADDRESS \
+  "allowance(address,address)(uint256)" \
+  $EOA1 $SPENDER_ADDRESS \
+  --rpc-url $ZKSYNC_SEPOLIA_RPC_URL
+```
 
-## First time
-1. Calls `createAccount` or `create2Account` on the `CONTRACT_DEPLOYER` system contract 
-   1. This will deploy the contract *to the L1*.
-   2. Mark the contract hash in the `KnownCodesStorage` contract
-   3. Mark it as an AA contract 
-   4. [Example](https://sepolia.explorer.zksync.io/tx/0xec0d587903415b2785d542f8b41c21b82ad0613c226a8c83376ec2b8f90ffdd0#eventlog)
-      1. Notice 6 logs emitted? 
+### 5) Transfer tokens to the AA smart account (fund it)
 
-## Subsequent times
-1. Calls `createAccount` or `create2Account` on the `CONTRACT_DEPLOYER` system contract 
-   1. The `CONTRACT_DEPLOYER` will check and see it's deployed this hash before
-   2. It will put in another system contract that this address is associated with the first has
-   3. [Example](https://sepolia.explorer.zksync.io/tx/0xe7a2a895d9854db5a6cc60df60524852d9957dd17adcc5720749f60b4da3eba7)
-      1. Only 3 logs emitted!
-   
-# FAQ
+```bash
+# recipient = AA contract
+sed -i 's/^RECIPIENT_ADDRESS=.*/RECIPIENT_ADDRESS='"$ZK_ACCOUNT_ADDRESS"'/' javascript-scripts/.env 2>/dev/null || \
+echo "RECIPIENT_ADDRESS=$ZK_ACCOUNT_ADDRESS" >> javascript-scripts/.env
 
-## What if I don't add the contract hash to factory deps? 
-The transaction will revert. The `ContractDeployer` checks to see if it knows the hash, and if not, it will revert! The `ContractDeployer` calls the `KnownCodesStorage` contract, which keeps track of *every single contract hash deployed on the zkSync chain. Crazy right!*
+# transfer 10 tokens (18 decimals)
+sed -i 's/^TRANSFER_AMOUNT=.*/TRANSFER_AMOUNT=10000000000000000000/' javascript-scripts/.env 2>/dev/null || \
+echo "TRANSFER_AMOUNT=10000000000000000000" >> javascript-scripts/.env
 
-## Why can't we do these deployments with foundry or cast? 
-Foundry and cast don't have support for the `factoryDeps` transaction field, or support for type `113` transactions. 
+set -a && source javascript-scripts/.env && set +a
 
-## Why can I use `forge create --legacy` to deploy a regular contract?
-`foundry-zksync` is smart enough to see a legacy deployment (when you send a transaction to the 0 address with data) and transform it into a contract call to the deployer. It's only smart enough for legacy deployments as of today, not the new `EIP-1559` type 2 transactions or account creation.
+cast send $TOKEN_ADDRESS \
+  "transfer(address,uint256)" \
+  $RECIPIENT_ADDRESS $TRANSFER_AMOUNT \
+  --private-key $PRIVATE_KEY_1 \
+  --rpc-url $ZKSYNC_SEPOLIA_RPC_URL
+```
 
-# Acknowledgements 
-- [Types of AAs on different chains](https://www.bundlebear.com/factories/all)
-- [eth-infinitism](https://github.com/eth-infinitism/account-abstraction/)
-- [Dan Nolan](https://www.youtube.com/watch?v=b4KWkIAPa3U)
-  - [Twitter Video](https://x.com/BeingDanNolan/status/1795848790043218029)
-- [zerodevapp](https://github.com/zerodevapp/kernel/)
-- [Alchemy LightAccount](https://github.com/alchemyplatform/light-account/)
+Verify balances:
 
-# Disclaimer
-*This codebase is for educational purposes only and has not undergone a security review.*
+```bash
+cast call $TOKEN_ADDRESS "balanceOf(address)(uint256)" $EOA1 --rpc-url $ZKSYNC_SEPOLIA_RPC_URL
+cast call $TOKEN_ADDRESS "balanceOf(address)(uint256)" $ZK_ACCOUNT_ADDRESS --rpc-url $ZKSYNC_SEPOLIA_RPC_URL
+```
+
+---
+
+## zkSync Verification (optional)
+
+
+---
+
+## Author
+
+**Maria Terese Ezeobi**
+
+---
+
+## Disclaimer
+
+This project is for educational/portfolio demonstration purposes and has not undergone a security audit.
+
+```
