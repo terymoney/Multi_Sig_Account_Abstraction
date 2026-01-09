@@ -49,13 +49,13 @@ This project demonstrates those concepts in code and on-chain deployments.
 
 ### zkSync Era Sepolia
 - **AA Smart Account:**  
-  https://explorer.sepolia.era.zksync.dev/address/0x8B24BCc2568C840fd79AB3e4a8F497e00e7A6b1B
+  (https://sepolia.explorer.zksync.io/address/0x8B24BCc2568C840fd79AB3e4a8F497e00e7A6b1B)
 
 - **TestERC20:**  
-  https://explorer.sepolia.era.zksync.dev/address/0xea20A883eB092D7f6B6a9579600FE1443018b82E
+  https://sepolia.explorer.zksync.io/address/0xea20A883eB092D7f6B6a9579600FE1443018b82E
 
 - **Example zkSync txs (demo proof):**
-  - Mint:    https://explorer.sepolia.era.zksync.dev/tx/0xfa2b7ff18034662f8360e7b3069d330916d2e888b353cd7f13ecbbf0e72db7d9
+  - Mint:    https://sepolia.explorer.zksync.io/tx/0xfa2b7ff18034662f8360e7b3069d330916d2e888b353cd7f13ecbbf0e72db7d9
   - Approve: https://explorer.sepolia.era.zksync.dev/tx/0xc3c1978400438a00c30097a1651c12235d638ce1913640a9c7b3b2d56f82e85c
   - Transfer:https://explorer.sepolia.era.zksync.dev/tx/0x4e0cbc7f68c6a62405dc2382aa7f6f9764b3af0dbec26ca9c9aeb6d66878e869
 
